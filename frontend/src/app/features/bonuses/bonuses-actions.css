@@ -1,0 +1,21 @@
+.row-actions { position: relative; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; }
+.action-control { display: inline-flex; }
+.action-button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 32px; padding: 5px; border: 0; border-radius: 6px; cursor: pointer; }
+.action-button svg { width: 18px; height: 18px; flex-shrink: 0; }
+.action-pay { background: #e5f3eb; color: #246047; }
+.action-cancel { background: #fff1d6; color: #79521b; }
+.action-delete { background: #fae8ec; color: #94364b; }
+.action-pay:hover:not([aria-disabled="true"]) { background: #cfe8da; }
+.action-cancel:hover:not([aria-disabled="true"]) { background: #f9e3b7; }
+.action-delete:hover:not([aria-disabled="true"]) { background: #f3d1d9; }
+.action-button[aria-disabled="true"] { background: #edf0f4; color: #798493; cursor: not-allowed; }
+.action-tooltip { position: absolute; z-index: 2; bottom: 100%; left: 0; width: max-content; max-width: min(230px, 75vw); padding: 7px 10px; border-radius: 6px; background: #26384b; color: #fff; font-size: .75rem; font-weight: 400; line-height: 1.45; text-align: left; white-space: normal; visibility: hidden; opacity: 0; pointer-events: none; }
+.action-control:hover .action-tooltip, .action-control:focus-within .action-tooltip { visibility: visible; opacity: 1; pointer-events: auto; }
+.row-actions.tooltips-dismissed .action-tooltip { visibility: hidden; opacity: 0; pointer-events: none; }
+@media (max-width: 1199px) {
+  tbody tr { overflow: visible; }
+  td:first-child { border-radius: 5px 5px 0 0; }
+  .row-actions { gap: 6px; }
+  .action-button { width: 36px; height: 36px; }
+  .action-tooltip { left: auto; right: 0; }
+}

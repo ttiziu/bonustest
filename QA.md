@@ -54,3 +54,7 @@ Para integración, seguir el comando con `SQLCMDPASSWORD` de README y ejecutar `
 La interfaz se comprobó manualmente en el navegador disponible, con datos semilla y registros temporales; no es una certificación de todos los navegadores ni una auditoría completa de accesibilidad. Los estados de carga, confirmación, error, éxito y acciones deshabilitadas están implementados. No se añade un sistema de autenticación ni transferencias bancarias.
 
 El caso extremo de muchos proyectos y un bruto muy pequeño puede generar un ajuste final negativo al seguir el redondeo especificado. Se rechaza sin persistir cambios y se documenta en README; no se altera silenciosamente el algoritmo de reparto.
+
+## Ajuste posterior: iconos y tooltips
+
+Las acciones usan iconos SVG con fondos pastel (verde, ámbar y rosado), nombres accesibles y tooltips al pasar el puntero o recibir foco. Las acciones no disponibles conservan `aria-disabled` y la protección en el manejador; su explicación sigue accesible con teclado. Se comprobó el tooltip con Tab, su cierre con Escape y la apertura/cancelación del modal desde el icono de pago. Los tres iconos comparten la misma fila y la pantalla no desborda horizontalmente en la vista revisada. La compilación de producción pasó sin advertencias. Se retiró el registro temporal de esta comprobación.

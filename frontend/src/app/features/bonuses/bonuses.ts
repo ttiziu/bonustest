@@ -18,7 +18,7 @@ const emptyFilters = (): BonusFilters => ({ departmentCode: '', employeeNumber: 
   selector: 'app-bonuses',
   imports: [FormsModule, DecimalPipe, DatePipe],
   templateUrl: './bonuses.html',
-  styleUrls: ['./bonuses.css', './bonuses-dialog.css', './bonuses-responsive.css', './bonuses-confirmation.css'],
+  styleUrls: ['./bonuses.css', './bonuses-dialog.css', './bonuses-responsive.css', './bonuses-confirmation.css', './bonuses-actions.css'],
 })
 export class Bonuses {
   private readonly injector = inject(Injector);
@@ -33,6 +33,7 @@ export class Bonuses {
   private readonly queries = new BehaviorSubject<BonusFilters>(emptyFilters());
   private appliedFilters = emptyFilters();
 
+  protected readonly tooltipDismissed = signal(false);
   protected readonly pendingAction = signal<{ bonus: Bonus; action: BonusAction } | null>(null);
   protected readonly actionContent = {
     pay: { title: 'Registrar pago del bono', confirm: 'Confirmar pago', description: 'El bruto se distribuirá entre los proyectos según las horas trabajadas. El bono pasará a Pagado.' },
@@ -174,6 +175,12 @@ export class Bonuses {
       },
       error: () => {},
     });
+  }
+
+  protected actionTooltip(label: string, bonus: Bonus) {
+    if (bonus.stateCode !== BonusStates.Registered) return `${label}: solo disponible para bonos registrados.`;
+    if (this.actionId() !== null) return `${label}: hay una operación en curso.`;
+    return label;
   }
 
   protected act(bonus: Bonus, action: BonusAction) {
