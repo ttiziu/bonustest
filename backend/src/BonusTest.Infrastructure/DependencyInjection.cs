@@ -1,3 +1,4 @@
+using BonusTest.Application.Bonuses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ public static class DependencyInjection
 
         services.AddScoped<ICatalogRepository, CatalogRepository>();
 
-        // registra aquí los repositorios del módulo de bonos.
+        services.AddScoped<IBonusRepository, BonusRepository>();
 
         return services;
     }
