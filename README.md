@@ -14,6 +14,7 @@ Ejecutar en orden en SQL Server, por ejemplo desde DBeaver:
 
 1. `database/01_schema_seed.sql`: tablas existentes y datos semilla. Se conserva sin modificaciones; ejecutar una sola vez en una base nueva.
 2. `database/02_bonus.sql`: tabla Bonus, restricciones e índices. Se puede ejecutar nuevamente sin borrar datos.
+3. `database/03_bonus_project_allocation.sql`: detalle del reparto por proyecto para el pago. También es reejecutable.
 
 Con el contenedor local `bonustest-sql` ya configurado:
 
@@ -29,10 +30,11 @@ read -s SQLCMDPASSWORD
 export SQLCMDPASSWORD
 docker exec -i -e SQLCMDPASSWORD bonustest-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b < database/01_schema_seed.sql
 docker exec -i -e SQLCMDPASSWORD bonustest-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b < database/02_bonus.sql
+docker exec -i -e SQLCMDPASSWORD bonustest-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b < database/03_bonus_project_allocation.sql
 unset SQLCMDPASSWORD
 ```
 
-Si `01_schema_seed.sql` ya fue ejecutado, ejecutar únicamente `02_bonus.sql`. La aplicación no crea ni modifica el esquema al arrancar.
+Si `01_schema_seed.sql` ya fue ejecutado, ejecutar `02_bonus.sql` y después `03_bonus_project_allocation.sql`. La aplicación no crea ni modifica el esquema al arrancar.
 
 ## Backend
 
@@ -72,6 +74,7 @@ Abrir http://localhost:4200/bonuses. La URL de la API y el código de usuario se
 | GET | `/api/v1/Bonus` | Listado paginado |
 | GET | `/api/v1/Bonus/employee/{departmentCode}/{employeeNumber}` | Buscar empleado activo |
 | POST | `/api/v1/Bonus` | Registrar bono |
+| POST | `/api/v1/Bonus/{bonusId}/pay` | Pagar y distribuir el bruto por proyecto |
 | PUT | `/api/v1/Bonus/{bonusId}/cancel` | Anular bono registrado |
 | DELETE | `/api/v1/Bonus/{bonusId}` | Eliminar lógicamente un bono registrado |
 
@@ -104,7 +107,18 @@ Con el empleado semilla TECH1-101: bruto 500.00, retención 40.00 y neto 460.00.
 - **Eliminación:** `IsDeleted` y filtro global de EF Core. Se conservan los datos y la auditoría; el periodo vuelve a estar disponible.
 - **Auditoría:** `CreatedBy`, `CreatedAt`, `ModifiedBy` y `ModifiedAt`. Las escrituras requieren un `UserCode` no vacío.
 - **Índices:** el índice único también facilita la búsqueda por empleado; un segundo índice filtrado por periodo/estado apoya los filtros y el orden del listado. El orden tiene desempate por ID para paginar de forma estable.
-- **Interfaz:** se mantiene la presentación del proyecto base, con formularios Angular y un diálogo nativo que gestiona foco, teclado y Escape. Las confirmaciones de anulación/eliminación se realizan antes de llamar a la API.
+- **Interfaz:** se mantiene la presentación del proyecto base, con formularios Angular y un diálogo nativo que gestiona foco, teclado y Escape. Pago, anulación y eliminación tienen un modal de confirmación propio con los datos del bono antes de llamar a la API. Las notificaciones se muestran una sola vez: dentro del diálogo activo o como avisos flotantes que no desplazan el contenido. Al cerrar un diálogo se limpian sus mensajes. El listado aprovecha el ancho del escritorio y, en pantallas estrechas, reorganiza las filas con etiquetas para mantener todos los campos visibles.
+
+## Pago y distribución por proyecto
+
+Solo un bono Registrado se puede pagar. `POST /api/v1/Bonus/{bonusId}/pay` devuelve el estado Pagado y las líneas distribuidas. No realiza transferencias bancarias: registra el pago previsto en la prueba.
+
+- El reparto usa el bruto guardado del bono y las horas de `EmployeeProjectHours`.
+- Los proyectos se ordenan por `EmployeeProjectHoursId`. Cada línea anterior a la última se redondea a dos decimales hacia arriba en las mitades; el último recibe exactamente el saldo. Un único proyecto recibe todo.
+- Se conserva en `BonusProjectAllocation` el proyecto de origen, su nombre, horas y bruto asignado para mantener el histórico.
+- El detalle, estado Pagado y auditoría se guardan con una transacción explícita de EF Core. Si una inserción o la comprobación de `rowversion` falla, se revierte toda la operación.
+- Se rechaza el pago si no hay proyectos, existen horas negativas o el total de horas es cero. Si, con importes muy pequeños y muchos proyectos, el redondeo exigido produce un saldo final negativo, se devuelve `PROJECT_ROUNDING` y el bono sigue Registrado; no se guarda una distribución negativa.
+- Una vez Pagado, el bono no puede pagarse otra vez, anularse ni eliminarse.
 
 ## Validación
 
@@ -118,10 +132,22 @@ npm --prefix frontend run build
 
 Las pruebas xUnit cubren cálculo fijo/porcentual, redondeo de mitades, límites, estados, empleados cesados, motivos inactivos, duplicados, auditoría y el límite mensual en Lima. Se comprobó además la API con SQL Server en una base temporal separada: registro, filtros, paginación, cancelación, eliminación lógica, reutilización del periodo y dos registros simultáneos. La base temporal se eliminó al terminar.
 
-La revisión de interfaz incluye búsqueda del empleado y la vista previa del ejemplo del enunciado. No se añade infraestructura de pruebas automatizadas de Angular.
+La revisión de interfaz incluye búsqueda del empleado, vista previa, confirmaciones y pago desde la pantalla. No se añade infraestructura de pruebas automatizadas de Angular.
+
+Para repetir las comprobaciones de integración contra SQL Server local (necesita Docker, el contenedor y Python 3):
+
+```bash
+dotnet build backend/BonusTest.slnx
+read -s SQLCMDPASSWORD
+export SQLCMDPASSWORD
+python3 scripts/verify_api.py
+unset SQLCMDPASSWORD
+```
+
+El script crea una base temporal con nombre único, arranca otra instancia de la API en un puerto libre y elimina únicamente esa base al terminar. No modifica los datos de `BonusTest`. Se puede indicar otro nombre de contenedor mediante `SQL_CONTAINER`. El resumen y alcance de la revisión están en `QA.md`.
 
 ## Alcance y pendientes
 
-Se implementan los requisitos obligatorios y el punto extra de pruebas unitarias. El punto extra de **pago y distribución por proyecto no se implementa**: no hay endpoint ni botón de pago. Se conservan los estados y tablas del proyecto base para respetar su estructura.
+Se implementan los requisitos obligatorios y ambos puntos extra: pruebas unitarias y pago con distribución por proyecto. Se conservan los estados y tablas del proyecto base. No quedan funcionalidades del enunciado pendientes; la puntuación corresponde al evaluador.
 
 No se agregan funcionalidades de producto fuera del enunciado. El historial de commits está disponible localmente; no se ha configurado ni publicado un repositorio remoto.
