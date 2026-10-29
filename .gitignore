@@ -1,0 +1,10 @@
+.DS_Store
+**/bin/
+**/obj/
+**/node_modules/
+**/.angular/
+**/dist/
+**/TestResults/
+**/appsettings.Local.json
+.env
+.artifacts/
