@@ -21,8 +21,6 @@ public static class BonusCalculator
             throw new BusinessException("BONUS_VALUE", "El porcentaje no puede superar el 100 %.");
 
         var gross = Round(type == BonusTypes.FixedAmount ? value : salary * value / 100);
-        if (gross == 0)
-            throw new BusinessException("BONUS_VALUE", "El bono debe ser de al menos 0.01 después del redondeo.");
         var tax = Round(gross * taxRate / 100);
         return new(gross, tax, Round(gross - tax));
     }

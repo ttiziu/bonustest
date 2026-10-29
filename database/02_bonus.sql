@@ -43,7 +43,7 @@ BEGIN
         CONSTRAINT CK_Bonus_Value CHECK (Value > 0 AND
             ((BonusTypeId = 1 AND Value <= MonthlySalary) OR (BonusTypeId = 2 AND Value <= 100))),
         CONSTRAINT CK_Bonus_Amounts CHECK (MonthlySalary > 0 AND TaxRate BETWEEN 0 AND 100 AND
-            GrossAmount > 0 AND TaxAmount >= 0 AND NetAmount >= 0 AND NetAmount = GrossAmount - TaxAmount)
+            GrossAmount >= 0 AND TaxAmount >= 0 AND NetAmount >= 0 AND NetAmount = GrossAmount - TaxAmount)
     );
 END;
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Bonus') AND name = 'UX_Bonus_ActiveEmployeePeriod')
