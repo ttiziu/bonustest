@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NgForm } from '@angular/forms';
 import { BehaviorSubject, EMPTY, Observable, Subscription, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
@@ -10,25 +10,35 @@ import { BonusApi } from '../../core/services/bonus-api';
 import { CatalogApi } from '../../core/services/catalog-api';
 import { Notification } from '../../core/services/notification';
 
+type BonusAction = 'pay' | 'cancel' | 'delete';
+
 const emptyFilters = (): BonusFilters => ({ departmentCode: '', employeeNumber: null, period: '', stateCode: '', pageIndex: 1, pageSize: 10 });
 
 @Component({
   selector: 'app-bonuses',
   imports: [FormsModule, DecimalPipe, DatePipe],
   templateUrl: './bonuses.html',
-  styleUrls: ['./bonuses.css', './bonuses-dialog.css', './bonuses-responsive.css'],
+  styleUrls: ['./bonuses.css', './bonuses-dialog.css', './bonuses-responsive.css', './bonuses-confirmation.css'],
 })
 export class Bonuses {
+  private readonly injector = inject(Injector);
   private readonly api = inject(BonusApi);
   private readonly catalogApi = inject(CatalogApi);
   protected readonly notification = inject(Notification);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('registrationDialog');
+  private readonly confirmationDialog = viewChild.required<ElementRef<HTMLDialogElement>>('confirmationDialog');
   private readonly registrationForm = viewChild<NgForm>('registrationForm');
   private employeeRequest?: Subscription;
   private readonly queries = new BehaviorSubject<BonusFilters>(emptyFilters());
   private appliedFilters = emptyFilters();
 
+  protected readonly pendingAction = signal<{ bonus: Bonus; action: BonusAction } | null>(null);
+  protected readonly actionContent = {
+    pay: { title: 'Registrar pago del bono', confirm: 'Confirmar pago', description: 'El bruto se distribuirá entre los proyectos según las horas trabajadas. El bono pasará a Pagado.' },
+    cancel: { title: 'Anular bono', confirm: 'Anular bono', description: 'El bono pasará a Anulado. Podrás registrar un nuevo bono para este empleado y periodo.' },
+    delete: { title: 'Eliminar bono', confirm: 'Eliminar bono', description: 'El bono dejará de aparecer en el listado.' },
+  };
   protected readonly states = BonusStates;
   protected readonly catalogs = toSignal(forkJoin({
     departments: this.catalogApi.getDepartments(),
@@ -54,7 +64,7 @@ export class Bonuses {
 
   constructor() {
     this.destroyRef.onDestroy(() => {
-      if (this.dialogOpen()) this.notification.endDialog();
+      if (this.dialogOpen() || this.pendingAction()) this.notification.endDialog();
     });
     this.queries.pipe(
       switchMap(filters => {
@@ -166,14 +176,38 @@ export class Bonuses {
     });
   }
 
-  protected act(bonus: Bonus, action: 'pay' | 'cancel' | 'delete') {
+  protected act(bonus: Bonus, action: BonusAction) {
     if (this.actionId() !== null || bonus.stateCode !== BonusStates.Registered) return;
-    const verb = action === 'pay' ? 'registrar el pago de' : action === 'cancel' ? 'anular' : 'eliminar';
-    if (!window.confirm(`¿Deseas ${verb} el bono de ${bonus.fullName} del periodo ${bonus.period}?`)) return;
+    this.pendingAction.set({ bonus, action });
+    this.notification.beginDialog();
+    afterNextRender(() => {
+      if (this.pendingAction()) this.confirmationDialog().nativeElement.showModal();
+    }, { injector: this.injector });
+  }
+
+  protected closeConfirmation() {
+    if (this.actionId() !== null) return;
+    this.confirmationDialog().nativeElement.close();
+    this.pendingAction.set(null);
+    this.notification.endDialog();
+  }
+
+  protected onConfirmationCancel(event: Event) {
+    event.preventDefault();
+    this.closeConfirmation();
+  }
+
+  protected confirmAction() {
+    const selection = this.pendingAction();
+    if (!selection || this.actionId() !== null) return;
+    const { bonus, action } = selection;
+    this.notification.clear();
     this.actionId.set(bonus.bonusId);
     const request: Observable<unknown> = action === 'pay' ? this.api.pay(bonus.bonusId) : action === 'cancel' ? this.api.cancel(bonus.bonusId) : this.api.delete(bonus.bonusId);
     request.pipe(finalize(() => this.actionId.set(null)), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.actionId.set(null);
+        this.closeConfirmation();
         this.notification.show('success', action === 'pay' ? 'El bono fue pagado y distribuido entre los proyectos.' : action === 'cancel' ? 'El bono fue anulado.' : 'El bono fue eliminado del listado.');
         this.goToPage(this.appliedFilters.pageIndex);
       },

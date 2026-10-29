@@ -15,9 +15,14 @@
   td small { white-space: normal; }
 }
 @media (max-width: 600px) {
-  tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .filters { grid-template-columns: 1fr; }
-  td[data-label="Área / N.º"], td[data-label="Empleado"], td[data-label="Motivo"], td[data-label="Neto"] { grid-column: 1 / -1; }
-  td[data-label="Neto"] { flex-direction: row; justify-content: space-between; align-items: center; }
-  td { padding: 12px; }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; padding-bottom: 20px; }
+  .card-header { margin-bottom: 22px; }
+  .list-heading { padding: 20px 0 14px; }
+  tbody tr { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  td { grid-column: span 3; padding: 10px 12px; gap: 4px; }
+  td:first-child, td[data-label="Motivo"] { grid-column: 1 / -1; }
+  td[data-label="Empleado"] { grid-column: span 3; }
+  td[data-label="Bruto"], td[data-label="Retención"], td[data-label="Neto"] { grid-column: span 2; border-top: 1px solid var(--border); }
+  .numeric { font-size: .85rem; }
+  td small { margin-top: 0; }
 }

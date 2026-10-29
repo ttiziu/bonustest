@@ -1,0 +1,15 @@
+.confirmation-dialog { width: min(460px, calc(100% - 32px)); }
+.confirmation-body { padding: 28px; }
+.confirmation-body h2 { font-size: 1.25rem; letter-spacing: -.02em; }
+#confirmation-description { color: var(--text-muted); font-size: .87rem; line-height: 1.6; margin: 12px 0 20px; }
+.confirmation-summary { padding: 18px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.confirmation-summary > strong { display: block; font-size: .95rem; }
+.confirmation-summary > span { display: block; margin-top: 5px; font-size: .8rem; color: var(--text-muted); }
+.confirmation-summary dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.confirmation-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 24px; }
+.btn-danger { background: #a12b34; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #84212a; }
+@media (max-width: 600px) {
+  .confirmation-body { padding: 22px; }
+  .confirmation-footer .btn { flex: 1; min-width: 0; white-space: normal; }
+}

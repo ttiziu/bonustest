@@ -185,3 +185,28 @@
     </footer>
   </form>
 </dialog>
+
+<dialog #confirmationDialog class="registration-dialog confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-description" (cancel)="onConfirmationCancel($event)">
+  @if (pendingAction(); as selection) {
+    <div class="confirmation-body">
+      <h2 id="confirmation-title">{{ actionContent[selection.action].title }}</h2>
+      <p id="confirmation-description">{{ actionContent[selection.action].description }}</p>
+      <div class="confirmation-summary">
+        <strong>{{ selection.bonus.fullName }}</strong>
+        <span>{{ selection.bonus.departmentName }} · {{ selection.bonus.employeeNumber }}</span>
+        <dl>
+          <div><dt>Periodo</dt><dd>{{ selection.bonus.period }}</dd></div>
+          <div><dt>Bruto</dt><dd>{{ selection.bonus.grossAmount | number:'1.2-2' }}</dd></div>
+          <div><dt>Neto</dt><dd>{{ selection.bonus.netAmount | number:'1.2-2' }}</dd></div>
+        </dl>
+      </div>
+      @if (notification.message(); as message) {
+        <p class="form-message" role="alert">{{ message.text }}</p>
+      }
+      <footer class="confirmation-footer">
+        <button type="button" class="btn btn-secondary" autofocus (click)="closeConfirmation()" [disabled]="actionId() !== null">Cancelar</button>
+        <button type="button" class="btn btn-primary" [class.btn-danger]="selection.action !== 'pay'" (click)="confirmAction()" [disabled]="actionId() !== null">{{ actionId() !== null ? 'Procesando…' : actionContent[selection.action].confirm }}</button>
+      </footer>
+    </div>
+  }
+</dialog>
