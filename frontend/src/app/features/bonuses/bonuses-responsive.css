@@ -1,0 +1,23 @@
+/* En pantallas estrechas cada fila conserva todos sus campos, sin recortar importes. */
+@media (max-width: 1199px) {
+  .table-scroll { border: 0; border-radius: 0; overflow: visible; }
+  table, tbody { display: block; width: 100%; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  tbody { display: grid; gap: 16px; }
+  tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  td { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; padding: 14px 16px; border: 0; overflow-wrap: anywhere; }
+  td::before { content: attr(data-label); color: var(--text-muted); font-size: .75rem; font-weight: 500; }
+  td:first-child { grid-column: 1 / -1; background: #f1f5f9; flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 16px; }
+  .row-actions { gap: 16px; }
+  td[data-label="Empleado"], td[data-label="Motivo"] { grid-column: span 2; }
+  .numeric { text-align: left; font-size: .95rem; }
+  .net { background: #edf4fc; }
+  td small { white-space: normal; }
+}
+@media (max-width: 600px) {
+  tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters { grid-template-columns: 1fr; }
+  td[data-label="Área / N.º"], td[data-label="Empleado"], td[data-label="Motivo"], td[data-label="Neto"] { grid-column: 1 / -1; }
+  td[data-label="Neto"] { flex-direction: row; justify-content: space-between; align-items: center; }
+  td { padding: 12px; }
+}

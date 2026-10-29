@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NgForm } from '@angular/forms';
-import { BehaviorSubject, EMPTY, Subscription, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subscription, catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import { Bonus, BonusFilters, Employee, RegisterBonus } from '../../core/models/bonus';
 import { BonusStates, MasterStateCodes } from '../../core/models/catalog';
 import { PagedResponse } from '../../core/models/paged-response';
@@ -16,7 +16,7 @@ const emptyFilters = (): BonusFilters => ({ departmentCode: '', employeeNumber: 
   selector: 'app-bonuses',
   imports: [FormsModule, DecimalPipe, DatePipe],
   templateUrl: './bonuses.html',
-  styleUrls: ['./bonuses.css', './bonuses-dialog.css'],
+  styleUrls: ['./bonuses.css', './bonuses-dialog.css', './bonuses-responsive.css'],
 })
 export class Bonuses {
   private readonly api = inject(BonusApi);
@@ -166,15 +166,15 @@ export class Bonuses {
     });
   }
 
-  protected act(bonus: Bonus, action: 'cancel' | 'delete') {
+  protected act(bonus: Bonus, action: 'pay' | 'cancel' | 'delete') {
     if (this.actionId() !== null || bonus.stateCode !== BonusStates.Registered) return;
-    const verb = action === 'cancel' ? 'anular' : 'eliminar';
+    const verb = action === 'pay' ? 'registrar el pago de' : action === 'cancel' ? 'anular' : 'eliminar';
     if (!window.confirm(`¿Deseas ${verb} el bono de ${bonus.fullName} del periodo ${bonus.period}?`)) return;
     this.actionId.set(bonus.bonusId);
-    const request = action === 'cancel' ? this.api.cancel(bonus.bonusId) : this.api.delete(bonus.bonusId);
+    const request: Observable<unknown> = action === 'pay' ? this.api.pay(bonus.bonusId) : action === 'cancel' ? this.api.cancel(bonus.bonusId) : this.api.delete(bonus.bonusId);
     request.pipe(finalize(() => this.actionId.set(null)), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.notification.show('success', action === 'cancel' ? 'El bono fue anulado.' : 'El bono fue eliminado del listado.');
+        this.notification.show('success', action === 'pay' ? 'El bono fue pagado y distribuido entre los proyectos.' : action === 'cancel' ? 'El bono fue anulado.' : 'El bono fue eliminado del listado.');
         this.goToPage(this.appliedFilters.pageIndex);
       },
       error: () => {},

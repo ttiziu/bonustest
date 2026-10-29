@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { Bonus, BonusFilters, Employee, RegisterBonus } from '../models/bonus';
+import { Bonus, BonusFilters, BonusPayment, Employee, RegisterBonus } from '../models/bonus';
 import { PagedResponse } from '../models/paged-response';
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +23,10 @@ export class BonusApi {
 
   register(request: RegisterBonus) {
     return this.http.post<{ bonusId: number }>(this.url, request);
+  }
+
+  pay(id: number) {
+    return this.http.post<BonusPayment>(`${this.url}/${id}/pay`, {});
   }
 
   cancel(id: number) {

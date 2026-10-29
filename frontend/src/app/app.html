@@ -2,6 +2,7 @@
   <span class="brand">Recursos Humanos · Back office</span>
 </header>
 
+<main class="content">
 @if (notification.pageMessage(); as message) {
   <div [class]="'notification notification-' + message.type" role="alert">
     <span>{{ message.text }}</span>
@@ -9,6 +10,5 @@
   </div>
 }
 
-<main class="content">
   <router-outlet />
 </main>

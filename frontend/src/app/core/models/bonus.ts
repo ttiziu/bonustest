@@ -43,3 +43,9 @@ export interface RegisterBonus {
   value: number | null;
   reasonCode: string;
 }
+
+export interface BonusPayment {
+  bonusId: number;
+  stateCode: string;
+  projects: { projectName: string; hours: number; grossAmount: number }[];
+}

@@ -38,7 +38,7 @@
 
   <div class="list-heading">
     <h2>Listado de bonos</h2>
-    <span aria-live="polite">@if (page(); as result) { {{ result.totalRecords }} registros }</span>
+    <span aria-live="polite">@if (page(); as result) { {{ result.totalRecords }} {{ result.totalRecords === 1 ? 'registro' : 'registros' }} }</span>
   </div>
   @if (loading()) {
     <div class="list-state" role="status">Cargando bonos…</div>
@@ -50,7 +50,7 @@
     </div>
   } @else if (page(); as result) {
     @if (result.data.length) {
-      <div class="table-scroll" tabindex="0" role="region" aria-label="Bonos de desempeño; desplaza horizontalmente para ver todas las columnas">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Bonos de desempeño">
         <table>
           <caption class="sr-only">Bonos de desempeño, página {{ result.pageNumber }} de {{ result.totalPages }}</caption>
           <thead><tr>
@@ -62,27 +62,28 @@
           <tbody>
             @for (bonus of result.data; track bonus.bonusId) {
               <tr>
-                <td><div class="row-actions">
+                <td data-label="Acciones"><div class="row-actions">
+                  <button type="button" class="text-button pay-action" (click)="act(bonus, 'pay')" [disabled]="bonus.stateCode !== states.Registered || actionId() !== null" [attr.aria-label]="'Pagar bono de ' + bonus.fullName">Pagar</button>
                   <button type="button" class="text-button" (click)="act(bonus, 'cancel')" [disabled]="bonus.stateCode !== states.Registered || actionId() !== null" [attr.aria-label]="'Anular bono de ' + bonus.fullName">Anular</button>
                   <button type="button" class="text-button danger" (click)="act(bonus, 'delete')" [disabled]="bonus.stateCode !== states.Registered || actionId() !== null" [attr.aria-label]="'Eliminar bono de ' + bonus.fullName">Eliminar</button>
                 </div></td>
-                <td><span class="status" [class.cancelled]="bonus.stateCode === states.Cancelled" [class.paid]="bonus.stateCode === states.Paid">{{ bonus.stateDescription }}</span></td>
-                <td class="nowrap">{{ bonus.period }}</td>
-                <td><span class="nowrap">{{ bonus.departmentName }}</span><small>{{ bonus.departmentCode }} · {{ bonus.employeeNumber }}</small></td>
-                <td class="employee-name">{{ bonus.fullName }}</td>
-                <td>{{ bonus.bonusTypeDescription }}</td>
-                <td class="numeric nowrap">{{ bonus.value | number:'1.2-4' }}{{ bonus.bonusTypeId === 2 ? ' %' : '' }}</td>
-                <td class="reason">{{ bonus.reasonDescription }}</td>
-                <td class="numeric">{{ bonus.grossAmount | number:'1.2-2' }}</td>
-                <td class="numeric">{{ bonus.taxAmount | number:'1.2-2' }}</td>
-                <td class="numeric net">{{ bonus.netAmount | number:'1.2-2' }}</td>
+                <td data-label="Estado"><span class="status" [class.cancelled]="bonus.stateCode === states.Cancelled" [class.paid]="bonus.stateCode === states.Paid">{{ bonus.stateDescription }}</span></td>
+                <td data-label="Periodo" class="nowrap">{{ bonus.period }}</td>
+                <td data-label="Área / N.º"><span class="nowrap">{{ bonus.departmentName }}</span><small>{{ bonus.departmentCode }} · {{ bonus.employeeNumber }}</small></td>
+                <td data-label="Empleado" class="employee-name">{{ bonus.fullName }}</td>
+                <td data-label="Tipo" class="bonus-type">{{ bonus.bonusTypeDescription }}</td>
+                <td data-label="Monto / %" class="numeric nowrap">{{ bonus.value | number:'1.2-4' }}{{ bonus.bonusTypeId === 2 ? ' %' : '' }}</td>
+                <td data-label="Motivo" class="reason">{{ bonus.reasonDescription }}</td>
+                <td data-label="Bruto" class="numeric">{{ bonus.grossAmount | number:'1.2-2' }}</td>
+                <td data-label="Retención" class="numeric">{{ bonus.taxAmount | number:'1.2-2' }}</td>
+                <td data-label="Neto" class="numeric net">{{ bonus.netAmount | number:'1.2-2' }}</td>
               </tr>
             }
           </tbody>
         </table>
       </div>
       <nav class="pagination" aria-label="Paginación de bonos">
-        <span>{{ (result.pageNumber - 1) * result.pageSize + 1 }}–{{ (result.pageNumber - 1) * result.pageSize + result.data.length }} de {{ result.totalRecords }} registros</span>
+        <span>{{ (result.pageNumber - 1) * result.pageSize + 1 }}–{{ (result.pageNumber - 1) * result.pageSize + result.data.length }} de {{ result.totalRecords }} {{ result.totalRecords === 1 ? 'registro' : 'registros' }}</span>
         <div>
           <button type="button" class="btn btn-secondary" (click)="goToPage(result.pageNumber - 1)" [disabled]="result.pageNumber <= 1">Anterior</button>
           <span>Página {{ result.pageNumber }} de {{ result.totalPages }}</span>

@@ -6,20 +6,20 @@ h2 { margin: 0; font-size: 1.1rem; font-weight: 650; }
 .filters { display: grid; grid-template-columns: 1.15fr .9fr 1fr 1.1fr auto; align-items: end; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
 label { display: flex; flex-direction: column; gap: 7px; font-size: .85rem; font-weight: 550; }
 label > span { display: contents; }
-.filter-actions, .row-actions { display: flex; align-items: center; gap: 8px; }
+.filter-actions { display: flex; align-items: center; gap: 8px; }
 .list-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 24px 0 16px; }
 .list-heading > span { color: var(--text-muted); font-size: .85rem; }
 .list-state { padding: 56px 16px; text-align: center; }
 .list-state strong { font-size: 1.05rem; font-weight: 600; }
 .list-state p { margin: 10px 0 24px; color: var(--text-muted); line-height: 1.5; }
 .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
-table { width: 100%; border-collapse: collapse; font-size: .83rem; line-height: 1.45; }
-th { padding: 12px; text-align: left; white-space: nowrap; background: #f1f5f9; font-weight: 600; color: #415167; }
-td { padding: 14px 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+table { width: 100%; border-collapse: collapse; font-size: .83rem; line-height: 1.45; table-layout: fixed; }
+th { padding: 12px 10px; text-align: left; background: #f1f5f9; font-weight: 600; color: #415167; }
+td { padding: 14px 10px; border-top: 1px solid var(--border); vertical-align: middle; }
 tr:hover td { background: #f8fafc; }
 td small { display: block; color: var(--text-muted); margin-top: 3px; white-space: nowrap; }
-.employee-name { min-width: 155px; font-weight: 550; }
-.reason { min-width: 160px; }
+.employee-name { font-weight: 550; }
+.reason, .employee-name { overflow-wrap: anywhere; }
 .numeric { text-align: right; font-variant-numeric: tabular-nums; }
 .nowrap { white-space: nowrap; }
 .net { font-weight: 650; }
@@ -40,3 +40,16 @@ td small { display: block; color: var(--text-muted); margin-top: 3px; white-spac
   .pagination { align-items: flex-start; flex-direction: column; }
   .pagination > div { width: 100%; justify-content: space-between; gap: 8px; }
 }
+
+.row-actions { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: center; }
+.pay-action { font-weight: 650; }
+th:nth-child(1) { width: 10%; }
+th:nth-child(2) { width: 8%; }
+th:nth-child(3) { width: 6.5%; }
+th:nth-child(4) { width: 9%; }
+th:nth-child(5) { width: 12%; }
+th:nth-child(6) { width: 9%; }
+th:nth-child(7) { width: 8%; }
+th:nth-child(8) { width: 12%; }
+th:nth-child(n+9) { width: 8.5%; }
+.numeric { overflow-wrap: anywhere; }
