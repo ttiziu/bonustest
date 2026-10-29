@@ -130,21 +130,9 @@ dotnet test backend/BonusTest.slnx
 npm --prefix frontend run build
 ```
 
-Las pruebas xUnit cubren cálculo fijo/porcentual, redondeo de mitades, límites, estados, empleados cesados, motivos inactivos, duplicados, auditoría y el límite mensual en Lima. Se comprobó además la API con SQL Server en una base temporal separada: registro, filtros, paginación, cancelación, eliminación lógica, reutilización del periodo y dos registros simultáneos. La base temporal se eliminó al terminar.
+Las pruebas xUnit cubren cálculo fijo/porcentual, redondeo de mitades, límites, estados, empleados cesados, motivos inactivos, duplicados, auditoría y el límite mensual en Lima.
 
 La revisión de interfaz incluye búsqueda del empleado, vista previa, confirmaciones y pago desde la pantalla. No se añade infraestructura de pruebas automatizadas de Angular.
-
-Para repetir las comprobaciones de integración contra SQL Server local (necesita Docker, el contenedor y Python 3):
-
-```bash
-dotnet build backend/BonusTest.slnx
-read -s SQLCMDPASSWORD
-export SQLCMDPASSWORD
-python3 scripts/verify_api.py
-unset SQLCMDPASSWORD
-```
-
-El script crea una base temporal con nombre único, arranca otra instancia de la API en un puerto libre y elimina únicamente esa base al terminar. No modifica los datos de `BonusTest`. Se puede indicar otro nombre de contenedor mediante `SQL_CONTAINER`. El resumen y alcance de la revisión están en `QA.md`.
 
 ## Alcance y pendientes
 
