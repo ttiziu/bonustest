@@ -53,6 +53,9 @@ export class Bonuses {
   protected draft: RegisterBonus = this.emptyDraft();
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.dialogOpen()) this.notification.endDialog();
+    });
     this.queries.pipe(
       switchMap(filters => {
         this.loading.set(true);
@@ -86,7 +89,7 @@ export class Bonuses {
   }
 
   protected openRegistration() {
-    this.notification.clear();
+    this.notification.beginDialog();
     this.draft = this.emptyDraft();
     this.registrationForm()?.resetForm({ ...this.draft, bonusPeriod: this.currentMonth });
     this.invalidateEmployee();
@@ -99,6 +102,7 @@ export class Bonuses {
     this.invalidateEmployee();
     this.dialogOpen.set(false);
     this.dialog().nativeElement.close();
+    this.notification.endDialog();
   }
 
   protected onDialogCancel(event: Event) {

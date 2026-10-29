@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 
 export type NotificationType = 'error' | 'warning' | 'success';
 
@@ -7,10 +7,22 @@ export interface NotificationMessage {
   text: string;
 }
 
-/** Aviso global que se muestra en la parte superior de la aplicación. */
+/** Aviso compartido: se presenta en la página o en el diálogo activo. */
 @Injectable({ providedIn: 'root' })
 export class Notification {
   readonly message = signal<NotificationMessage | null>(null);
+  private readonly dialogActive = signal(false);
+  readonly pageMessage = computed(() => this.dialogActive() ? null : this.message());
+
+  beginDialog(): void {
+    this.clear();
+    this.dialogActive.set(true);
+  }
+
+  endDialog(): void {
+    this.clear();
+    this.dialogActive.set(false);
+  }
 
   show(type: NotificationType, text: string): void {
     this.message.set({ type, text });
