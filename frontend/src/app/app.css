@@ -16,9 +16,17 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin: 0 0 20px;
-  padding: 12px 16px;
-  border-radius: 6px;
+  position: fixed;
+  z-index: 1000;
+  right: clamp(16px, 2vw, 40px);
+  bottom: 24px;
+  width: min(420px, calc(100% - 32px));
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px #14253e26;
+  font-size: .9rem;
+  line-height: 1.5;
 }
 
 .notification-error {
@@ -40,6 +48,9 @@
   border: none;
   background: transparent;
   font-size: 1.25rem;
+  min-width: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
   cursor: pointer;
   color: inherit;
 }

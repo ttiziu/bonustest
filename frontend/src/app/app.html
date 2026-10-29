@@ -4,7 +4,7 @@
 
 <main class="content">
 @if (notification.pageMessage(); as message) {
-  <div [class]="'notification notification-' + message.type" role="alert">
+  <div [class]="'notification notification-' + message.type" [attr.role]="message.type === 'success' ? 'status' : 'alert'">
     <span>{{ message.text }}</span>
     <button type="button" class="notification-close" aria-label="Cerrar" (click)="notification.clear()">×</button>
   </div>
