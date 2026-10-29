@@ -1,33 +1,186 @@
-<section class="card">
+<section class="card" aria-labelledby="bonuses-title">
   <header class="card-header">
-    <h2>Bonos de desempeño</h2>
-    <button type="button" class="btn btn-primary" disabled>Nuevo registro</button>
+    <div>
+      <h1 id="bonuses-title">Bonos de desempeño</h1>
+      <p>Registra y consulta los reconocimientos de tu equipo.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openRegistration()" [disabled]="!catalogs()">Nuevo registro</button>
   </header>
 
-  <div class="filters">
-    <label>
-      Área
-      <select>
-        <option value="">Todas</option>
-        @for (department of departments(); track department.departmentCode) {
+  <form class="filters" #filterForm="ngForm" (ngSubmit)="search()">
+    <label>Área
+      <select name="department" [(ngModel)]="filters.departmentCode">
+        <option value="">Todas las áreas</option>
+        @for (department of catalogs()?.departments ?? []; track department.departmentCode) {
           <option [value]="department.departmentCode">{{ department.departmentName }}</option>
         }
       </select>
     </label>
-
-    <label>
-      Estado
-      <select>
-        <option value="">Todos</option>
-        @for (state of bonusStates(); track state.stateCode) {
+    <label>N.º de empleado
+      <input type="number" name="employeeNumber" [(ngModel)]="filters.employeeNumber" min="1" step="1" placeholder="Ej. 101">
+    </label>
+    <label>Periodo
+      <input type="month" name="period" [(ngModel)]="filters.period">
+    </label>
+    <label>Estado
+      <select name="state" [(ngModel)]="filters.stateCode">
+        <option value="">Todos los estados</option>
+        @for (state of catalogs()?.states ?? []; track state.stateCode) {
           <option [value]="state.stateCode">{{ state.stateDescription }}</option>
         }
       </select>
     </label>
-  </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="loading() || filterForm.invalid">Buscar</button>
+      <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="loading()">Limpiar</button>
+    </div>
+  </form>
 
-  <p class="placeholder">
-    Los combos ya consumen <code>GET /api/v1/Catalog</code>. Implementa aquí el listado paginado,
-    las acciones por fila y el modal de registro descritos en el enunciado.
-  </p>
+  <div class="list-heading">
+    <h2>Listado de bonos</h2>
+    <span aria-live="polite">@if (page(); as result) { {{ result.totalRecords }} registros }</span>
+  </div>
+  @if (loading()) {
+    <div class="list-state" role="status">Cargando bonos…</div>
+  } @else if (listFailed()) {
+    <div class="list-state" role="status">
+      <strong>No pudimos cargar los bonos</strong>
+      <p>Comprueba que la API y la base de datos estén disponibles.</p>
+      <button type="button" class="btn btn-secondary" (click)="goToPage(page()?.pageNumber ?? 1)">Reintentar</button>
+    </div>
+  } @else if (page(); as result) {
+    @if (result.data.length) {
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Bonos de desempeño; desplaza horizontalmente para ver todas las columnas">
+        <table>
+          <caption class="sr-only">Bonos de desempeño, página {{ result.pageNumber }} de {{ result.totalPages }}</caption>
+          <thead><tr>
+            <th scope="col">Acciones</th><th scope="col">Estado</th><th scope="col">Periodo</th>
+            <th scope="col">Área / N.º</th><th scope="col">Empleado</th><th scope="col">Tipo</th>
+            <th scope="col" class="numeric">Monto / %</th><th scope="col">Motivo</th>
+            <th scope="col" class="numeric">Bruto</th><th scope="col" class="numeric">Retención</th><th scope="col" class="numeric">Neto</th>
+          </tr></thead>
+          <tbody>
+            @for (bonus of result.data; track bonus.bonusId) {
+              <tr>
+                <td><div class="row-actions">
+                  <button type="button" class="text-button" (click)="act(bonus, 'cancel')" [disabled]="bonus.stateCode !== states.Registered || actionId() !== null" [attr.aria-label]="'Anular bono de ' + bonus.fullName">Anular</button>
+                  <button type="button" class="text-button danger" (click)="act(bonus, 'delete')" [disabled]="bonus.stateCode !== states.Registered || actionId() !== null" [attr.aria-label]="'Eliminar bono de ' + bonus.fullName">Eliminar</button>
+                </div></td>
+                <td><span class="status" [class.cancelled]="bonus.stateCode === states.Cancelled" [class.paid]="bonus.stateCode === states.Paid">{{ bonus.stateDescription }}</span></td>
+                <td class="nowrap">{{ bonus.period }}</td>
+                <td><span class="nowrap">{{ bonus.departmentName }}</span><small>{{ bonus.departmentCode }} · {{ bonus.employeeNumber }}</small></td>
+                <td class="employee-name">{{ bonus.fullName }}</td>
+                <td>{{ bonus.bonusTypeDescription }}</td>
+                <td class="numeric nowrap">{{ bonus.value | number:'1.2-4' }}{{ bonus.bonusTypeId === 2 ? ' %' : '' }}</td>
+                <td class="reason">{{ bonus.reasonDescription }}</td>
+                <td class="numeric">{{ bonus.grossAmount | number:'1.2-2' }}</td>
+                <td class="numeric">{{ bonus.taxAmount | number:'1.2-2' }}</td>
+                <td class="numeric net">{{ bonus.netAmount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <nav class="pagination" aria-label="Paginación de bonos">
+        <span>{{ (result.pageNumber - 1) * result.pageSize + 1 }}–{{ (result.pageNumber - 1) * result.pageSize + result.data.length }} de {{ result.totalRecords }} registros</span>
+        <div>
+          <button type="button" class="btn btn-secondary" (click)="goToPage(result.pageNumber - 1)" [disabled]="result.pageNumber <= 1">Anterior</button>
+          <span>Página {{ result.pageNumber }} de {{ result.totalPages }}</span>
+          <button type="button" class="btn btn-secondary" (click)="goToPage(result.pageNumber + 1)" [disabled]="result.pageNumber >= result.totalPages">Siguiente</button>
+        </div>
+      </nav>
+    } @else {
+      <div class="list-state">
+        <strong>No hay bonos para mostrar</strong>
+        <p>Prueba con otros filtros o registra el primer bono de tu equipo.</p>
+        <button type="button" class="btn btn-secondary" (click)="openRegistration()" [disabled]="!catalogs()">Registrar un bono</button>
+      </div>
+    }
+  }
 </section>
+
+<dialog #registrationDialog class="registration-dialog" aria-labelledby="registration-title" (cancel)="onDialogCancel($event)">
+  <form #registrationForm="ngForm" (ngSubmit)="save(registrationForm)">
+    <header class="dialog-header">
+      <div><h2 id="registration-title">Registrar bono</h2><p>Busca al empleado y completa los datos del reconocimiento.</p></div>
+      <button type="button" class="text-button" (click)="closeRegistration()" [disabled]="saving()" aria-label="Cerrar registro">Cerrar</button>
+    </header>
+    @if (dialogOpen() && notification.message(); as message) {
+      <p class="form-message" role="alert">{{ message.text }}</p>
+    }
+    <fieldset [disabled]="saving()">
+      <legend>Empleado</legend>
+      <div class="employee-search">
+        <label>Área <span aria-hidden="true">*</span>
+          <select name="departmentCode" [(ngModel)]="draft.departmentCode" (ngModelChange)="invalidateEmployee()" required autofocus>
+            <option value="">Selecciona un área</option>
+            @for (department of catalogs()?.departments ?? []; track department.departmentCode) {
+              <option [value]="department.departmentCode">{{ department.departmentName }}</option>
+            }
+          </select>
+        </label>
+        <label>N.º de empleado <span aria-hidden="true">*</span>
+          <input type="number" name="employeeNumber" [(ngModel)]="draft.employeeNumber" (ngModelChange)="invalidateEmployee()" required min="1" step="1" placeholder="Ej. 101">
+        </label>
+        <button type="button" class="btn btn-secondary" (click)="findEmployee()" [disabled]="searchingEmployee()">{{ searchingEmployee() ? 'Buscando…' : 'Buscar empleado' }}</button>
+      </div>
+      @if (lookupAttempted() && (!draft.departmentCode || !draft.employeeNumber || draft.employeeNumber < 1)) {
+        <p class="field-error" role="alert">Selecciona un área e ingresa un número de empleado mayor que cero.</p>
+      }
+      @if (employee(); as person) {
+        <div class="employee-detail" aria-live="polite">
+          <strong>{{ person.fullName }}</strong>
+          <dl>
+            <div><dt>Fecha de ingreso</dt><dd>{{ person.hireDate | date:'dd/MM/yyyy' }}</dd></div>
+            <div><dt>Sueldo mensual</dt><dd>{{ person.monthlySalary | number:'1.2-2' }}</dd></div>
+            <div><dt>Retención</dt><dd>{{ person.taxRate | number:'1.0-2' }} %</dd></div>
+          </dl>
+        </div>
+      } @else {
+        <p class="helper">Busca un empleado activo para habilitar el registro.</p>
+      }
+    </fieldset>
+    <fieldset [disabled]="!employee() || saving()">
+      <legend>Datos del bono</legend>
+      <div class="bonus-fields">
+        <label>Periodo <span aria-hidden="true">*</span>
+          <input type="month" name="bonusPeriod" [(ngModel)]="draft.period" required [max]="currentMonth" #periodField="ngModel" aria-describedby="period-help">
+          <small id="period-help" [class.field-error]="!validPeriod">Hasta el mes actual. No se permiten periodos futuros.</small>
+        </label>
+        <label>Tipo de bono <span aria-hidden="true">*</span>
+          <select name="bonusTypeId" [(ngModel)]="draft.bonusTypeId" required>
+            @for (type of catalogs()?.types ?? []; track type.bonusTypeId) {
+              <option [ngValue]="type.bonusTypeId">{{ type.bonusTypeDescription }}</option>
+            }
+          </select>
+        </label>
+        <label>{{ draft.bonusTypeId === 2 ? 'Porcentaje del sueldo' : 'Monto fijo' }} <span aria-hidden="true">*</span>
+          <input type="number" name="value" [(ngModel)]="draft.value" required min="0.0001" [max]="valueLimit" step="0.0001" #valueField="ngModel" placeholder="0.00" aria-describedby="value-help">
+          <small id="value-help" [class.field-error]="valueField.invalid && valueField.touched">Mayor que 0 y hasta {{ valueLimit | number:'1.0-2' }}{{ draft.bonusTypeId === 2 ? ' %' : '' }}. Máximo 4 decimales.</small>
+        </label>
+        <label>Motivo <span aria-hidden="true">*</span>
+          <select name="reasonCode" [(ngModel)]="draft.reasonCode" required>
+            <option value="">Selecciona un motivo</option>
+            @for (reason of catalogs()?.reasons ?? []; track reason.reasonCode) {
+              <option [value]="reason.reasonCode">{{ reason.reasonDescription }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </fieldset>
+    <section class="preview" aria-labelledby="preview-title" aria-live="polite">
+      <h3 id="preview-title">Vista previa del cálculo</h3>
+      <dl>
+        <div><dt>Bruto</dt><dd>{{ preview ? (preview.gross | number:'1.2-2') : '—' }}</dd></div>
+        <div><dt>Retención</dt><dd>{{ preview ? (preview.tax | number:'1.2-2') : '—' }}</dd></div>
+        <div class="preview-net"><dt>Neto a pagar</dt><dd>{{ preview ? (preview.net | number:'1.2-2') : '—' }}</dd></div>
+      </dl>
+      <p>Los importes se redondean a dos decimales. El cálculo se valida nuevamente al guardar.</p>
+    </section>
+    <footer class="dialog-footer">
+      <span>Los campos con * son obligatorios.</span>
+      <div><button type="button" class="btn btn-secondary" (click)="closeRegistration()" [disabled]="saving()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !employee() || !preview || !validPeriod || saving()">{{ saving() ? 'Guardando…' : 'Guardar bono' }}</button></div>
+    </footer>
+  </form>
+</dialog>
