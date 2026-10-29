@@ -1,5 +1,6 @@
 using BonusTest.Domain.Constants;
 using BonusTest.Domain.Exceptions;
+using BonusTest.Domain.Services;
 
 namespace BonusTest.Domain.Entities;
 
@@ -30,6 +31,16 @@ public class Bonus
     public BonusType BonusType { get; set; } = null!;
     public BonusReason Reason { get; set; } = null!;
 
+    public List<BonusProjectAllocation> ProjectAllocations { get; set; } = [];
+
+    public void Pay(IReadOnlyList<EmployeeProjectHours> projects, string userCode, DateTimeOffset now)
+    {
+        EnsureRegistered();
+        ProjectAllocations = BonusDistributor.Distribute(GrossAmount, projects);
+        StateCode = BonusStates.Paid;
+        Touch(userCode, now);
+    }
+
     public void Cancel(string userCode, DateTimeOffset now)
     {
         EnsureRegistered();
@@ -47,7 +58,7 @@ public class Bonus
     private void EnsureRegistered()
     {
         if (IsDeleted || StateCode != BonusStates.Registered)
-            throw new BusinessException("BONUS_STATE", "Solo se puede anular o eliminar un bono registrado.");
+            throw new BusinessException("BONUS_STATE", "Solo se puede pagar, anular o eliminar un bono registrado.");
     }
 
     private void Touch(string userCode, DateTimeOffset now)

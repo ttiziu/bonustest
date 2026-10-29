@@ -58,6 +58,18 @@ public class BonusRepository(AppDbContext context) : IBonusRepository
         await SaveAsync(ct);
     }
 
+    public async Task<IReadOnlyList<EmployeeProjectHours>> GetProjectHoursAsync(string departmentCode, int employeeNumber, CancellationToken ct) =>
+        await context.EmployeeProjectHours.AsNoTracking()
+            .Where(x => x.DepartmentCode == departmentCode && x.EmployeeNumber == employeeNumber)
+            .OrderBy(x => x.EmployeeProjectHoursId).ToListAsync(ct);
+
+    public async Task SavePaymentAsync(CancellationToken ct)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        await SaveAsync(ct);
+        await transaction.CommitAsync(ct);
+    }
+
     public async Task SaveAsync(CancellationToken ct)
     {
         try { await context.SaveChangesAsync(ct); }

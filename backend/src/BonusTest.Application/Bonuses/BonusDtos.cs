@@ -20,3 +20,6 @@ public record BonusDto(int BonusId, string DepartmentCode, string DepartmentName
     string FullName, string Period, int BonusTypeId, string BonusTypeDescription, decimal Value,
     string ReasonCode, string ReasonDescription, string StateCode, string StateDescription,
     decimal GrossAmount, decimal TaxAmount, decimal NetAmount);
+
+public record BonusProjectDto(string ProjectName, decimal Hours, decimal GrossAmount);
+public record BonusPaymentDto(int BonusId, string StateCode, IReadOnlyList<BonusProjectDto> Projects);

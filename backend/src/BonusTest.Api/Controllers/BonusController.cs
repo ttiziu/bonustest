@@ -23,6 +23,10 @@ public class BonusController(BonusService service) : ControllerBase
         return StatusCode(StatusCodes.Status201Created, new { bonusId });
     }
 
+    [HttpPost("{bonusId:int}/pay")]
+    public async Task<IActionResult> Pay(int bonusId, [FromHeader(Name = "UserCode")] string? userCode, CancellationToken ct) =>
+        Ok(await service.PayAsync(bonusId, userCode, ct));
+
     [HttpPut("{bonusId:int}/cancel")]
     public async Task<IActionResult> Cancel(int bonusId, [FromHeader(Name = "UserCode")] string? userCode, CancellationToken ct)
     {

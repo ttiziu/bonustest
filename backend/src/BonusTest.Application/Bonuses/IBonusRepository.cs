@@ -11,5 +11,7 @@ public interface IBonusRepository
     Task<bool> HasActiveBonusAsync(string departmentCode, int employeeNumber, DateOnly period, CancellationToken ct);
     Task<Bonus?> FindAsync(int bonusId, CancellationToken ct);
     Task AddAsync(Bonus bonus, CancellationToken ct);
+    Task<IReadOnlyList<EmployeeProjectHours>> GetProjectHoursAsync(string departmentCode, int employeeNumber, CancellationToken ct);
+    Task SavePaymentAsync(CancellationToken ct);
     Task SaveAsync(CancellationToken ct);
 }

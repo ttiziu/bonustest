@@ -59,6 +59,17 @@ public class BonusService(IBonusRepository repository, TimeProvider clock)
         return bonus.BonusId;
     }
 
+    public async Task<BonusPaymentDto> PayAsync(int bonusId, string? userCode, CancellationToken ct)
+    {
+        var user = RequireUser(userCode);
+        var bonus = await RequireBonusAsync(bonusId, ct);
+        var projects = await repository.GetProjectHoursAsync(bonus.DepartmentCode, bonus.EmployeeNumber, ct);
+        bonus.Pay(projects, user, clock.GetUtcNow());
+        await repository.SavePaymentAsync(ct);
+        return new(bonus.BonusId, bonus.StateCode, bonus.ProjectAllocations
+            .Select(x => new BonusProjectDto(x.ProjectName, x.Hours, x.GrossAmount)).ToList());
+    }
+
     public async Task CancelAsync(int bonusId, string? userCode, CancellationToken ct)
     {
         var user = RequireUser(userCode);
