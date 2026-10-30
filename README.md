@@ -138,4 +138,4 @@ La revisión de interfaz incluye búsqueda del empleado, vista previa, confirmac
 
 Se implementan los requisitos obligatorios y ambos puntos extra: pruebas unitarias y pago con distribución por proyecto. Se conservan los estados y tablas del proyecto base. No quedan funcionalidades del enunciado pendientes; la puntuación corresponde al evaluador.
 
-No se agregan funcionalidades de producto fuera del enunciado. El historial de commits está disponible localmente; no se ha configurado ni publicado un repositorio remoto.
+No se agregan funcionalidades de producto fuera del enunciado.
